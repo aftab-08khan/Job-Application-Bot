@@ -1,101 +1,208 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useTheme } from "../../context/themeContext";
+import { styled } from "@mui/material/styles";
+import Switch from "@mui/material/Switch";
+import { Typography } from "@mui/material";
+
+const MaterialUISwitch = styled(Switch)(({ theme }) => ({
+  width: 62,
+  height: 34,
+  padding: 7,
+  "& .MuiSwitch-switchBase": {
+    margin: 1,
+    padding: 0,
+    transform: "translateX(6px)",
+    "&.Mui-checked": {
+      color: "#fff",
+      transform: "translateX(22px)",
+      "& + .MuiSwitch-track": {
+        opacity: 1,
+        backgroundColor: "#aab4be",
+      },
+    },
+  },
+  "& .MuiSwitch-thumb": {
+    backgroundColor: "#001e3c",
+    width: 32,
+    height: 32,
+  },
+  "& .MuiSwitch-track": {
+    opacity: 1,
+    backgroundColor: "#aab4be",
+    borderRadius: 20 / 2,
+  },
+}));
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [csvFile, setCsvFile] = useState(null);
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const { handleMode, mode } = useTheme();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [isSpeechRecognitionAvailable, setIsSpeechRecognitionAvailable] =
+    useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (
+        "SpeechRecognition" in window ||
+        "webkitSpeechRecognition" in window
+      ) {
+        setIsSpeechRecognitionAvailable(true);
+      }
+    }
+  }, []);
+
+  const startSpeechRecognition = () => {
+    if (isSpeechRecognitionAvailable) {
+      const recognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new recognition();
+      recognitionInstance.lang = "en-US";
+      recognitionInstance.interimResults = false;
+
+      recognitionInstance.onresult = (event) => {
+        const speechToText = event.results[0][0].transcript;
+        setDescription(speechToText);
+      };
+
+      recognitionInstance.start();
+    } else {
+      alert("Speech Recognition is not supported in your browser.");
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setCsvFile(e.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!csvFile || !description || !subject) {
+      setErrorMessage("Please fill in all fields.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("csvFile", csvFile);
+    formData.append("description", description);
+    formData.append("subject", subject);
+
+    try {
+      setLoading(true);
+      const res = await fetch("/api/send-emails", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        setSuccessMessage("Emails sent successfully!");
+        setErrorMessage(null);
+      } else {
+        setErrorMessage("Failed to send emails.");
+      }
+    } catch (error) {
+      setErrorMessage("Error sending emails.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full p-6 min-h-screen bg-gray-900 transition duration-300">
+      <div className="w-full bg-gray-800 bg-opacity-60 p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md transition-all duration-500 animate-fadeIn">
+        <h1 className="text-3xl font-semibold text-center mb-6 text-indigo-400">
+          Send Emails
+        </h1>
+
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="flex flex-row gap-6">
+            <div className="flex-1">
+              <label
+                htmlFor="csvFile"
+                className="block text-lg font-medium text-gray-300"
+              >
+                Upload CSV
+              </label>
+              <input
+                type="file"
+                id="csvFile"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="mt-2 w-full border p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600"
+              />
+            </div>
+
+            <div className="flex-1">
+              <label
+                htmlFor="subject"
+                className="block text-lg font-medium text-gray-300"
+              >
+                Subject
+              </label>
+              <input
+                type="text"
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="mt-2 w-full border p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600"
+                placeholder="Enter subject"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div>
+              <label
+                htmlFor="description"
+                className="block text-lg font-medium text-gray-300"
+              >
+                Description
+              </label>
+              {isSpeechRecognitionAvailable && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={startSpeechRecognition}
+                    className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md"
+                  >
+                    Start Speaking
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <textarea
+              id="description"
+              rows="4"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-2 w-full border p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+
+          {errorMessage && (
+            <div className="text-red-500 text-center">{errorMessage}</div>
+          )}
+          {successMessage && (
+            <div className="text-green-500 text-center">{successMessage}</div>
+          )}
+
+          <button
+            type="submit"
+            className="mt-6 p-3 w-full bg-indigo-700 text-white rounded-md"
+            disabled={loading}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            {loading ? "Sending..." : "Send Emails"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

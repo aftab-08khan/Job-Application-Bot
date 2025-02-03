@@ -121,7 +121,6 @@ export default function Home() {
         </h1>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* File Upload and Subject Input */}
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
               <label
@@ -131,7 +130,6 @@ export default function Home() {
                 Upload CSV
               </label>
               <div className="relative mt-2">
-                {/* Hidden file input */}
                 <input
                   type="file"
                   id="csvFile"
@@ -139,7 +137,6 @@ export default function Home() {
                   onChange={handleFileChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
-                {/* Custom file upload area */}
                 <div className="w-full p-4 rounded-lg border-2 border-dashed border-gray-600 bg-gray-700 hover:border-indigo-500 transition duration-300 flex items-center justify-center">
                   <div className="text-center">
                     <svg
@@ -165,7 +162,6 @@ export default function Home() {
                     <p className="text-xs text-gray-400">CSV file only</p>
                   </div>
                 </div>
-                {/* Display selected file name */}
                 {csvFile && (
                   <div className="mt-2 text-sm text-gray-300">
                     Selected file:{" "}
@@ -194,17 +190,8 @@ export default function Home() {
               placeholder="Enter subject"
             />
           </div>
-          {/* Description Textarea */}
           <div>
             <div className="flex justify-between w-full items-center mb-4">
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-lg font-medium text-gray-300 mb-2"
-                >
-                  Description
-                </label>
-              </div>
               {isSpeechRecognitionAvailable && (
                 <div className="">
                   <button
@@ -239,7 +226,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="mt-6 p-3 w-full bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"

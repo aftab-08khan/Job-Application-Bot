@@ -5,35 +5,36 @@ import { useTheme } from "../../context/themeContext";
 import { styled } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import { Typography } from "@mui/material";
+import Link from "next/link";
 
-const MaterialUISwitch = styled(Switch)(({ theme }) => ({
-  width: 62,
-  height: 34,
-  padding: 7,
-  "& .MuiSwitch-switchBase": {
-    margin: 1,
-    padding: 0,
-    transform: "translateX(6px)",
-    "&.Mui-checked": {
-      color: "#fff",
-      transform: "translateX(22px)",
-      "& + .MuiSwitch-track": {
-        opacity: 1,
-        backgroundColor: "#aab4be",
-      },
-    },
-  },
-  "& .MuiSwitch-thumb": {
-    backgroundColor: "#001e3c",
-    width: 32,
-    height: 32,
-  },
-  "& .MuiSwitch-track": {
-    opacity: 1,
-    backgroundColor: "#aab4be",
-    borderRadius: 20 / 2,
-  },
-}));
+// const MaterialUISwitch = styled(Switch)(({ theme }) => ({
+//   width: 62,
+//   height: 34,
+//   padding: 7,
+//   "& .MuiSwitch-switchBase": {
+//     margin: 1,
+//     padding: 0,
+//     transform: "translateX(6px)",
+//     "&.Mui-checked": {
+//       color: "#fff",
+//       transform: "translateX(22px)",
+//       "& + .MuiSwitch-track": {
+//         opacity: 1,
+//         backgroundColor: "#aab4be",
+//       },
+//     },
+//   },
+//   "& .MuiSwitch-thumb": {
+//     backgroundColor: "#001e3c",
+//     width: 32,
+//     height: 32,
+//   },
+//   "& .MuiSwitch-track": {
+//     opacity: 1,
+//     backgroundColor: "#aab4be",
+//     borderRadius: 20 / 2,
+//   },
+// }));
 
 export default function Home() {
   const [csvFile, setCsvFile] = useState(null);
@@ -103,6 +104,9 @@ export default function Home() {
       if (res.ok) {
         setSuccessMessage("Emails sent successfully!");
         setErrorMessage(null);
+        setCsvFile(null);
+        setDescription("");
+        setSubject("");
       } else {
         setErrorMessage("Failed to send emails.");
       }
@@ -112,6 +116,40 @@ export default function Home() {
       setLoading(false);
     }
   };
+  const predictEmailScore = async (description) => {
+    try {
+      const response = await fetch("/api/predict-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch score");
+      }
+
+      const data = await response.json();
+      return data.score;
+    } catch (error) {
+      console.error("Error predicting email score:", error.message);
+      return null;
+    }
+  };
+
+  const handleSubmitDescription = async (e) => {
+    e.preventDefault();
+    const emailScore = await predictEmailScore(description);
+    console.log("Predicted Email Score:", emailScore);
+  };
+  // fetch("/api/predict-score", {
+  //   method: "POST",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify({ email_description: "Test email" }),
+  // })
+  //   .then((res) => res.json())
+  //   .then(console.log)
+  //   .catch(console.error);
 
   return (
     <div className="w-full p-4 min-h-screen bg-gray-900 transition duration-300 flex items-center justify-center">
@@ -174,6 +212,9 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300 w-40">
+            <Link href="/ai-helper">Generate with AI</Link>
+          </div>
           <div className="flex-1">
             <label
               htmlFor="subject"
@@ -212,9 +253,17 @@ export default function Home() {
               className="mt-2 w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600 hover:border-indigo-500"
               placeholder="Enter description"
             ></textarea>
+            <div className="">
+              <button
+                type="button"
+                onClick={handleSubmitDescription}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300"
+              >
+                Test Description
+              </button>
+            </div>
           </div>
 
-          {/* Error and Success Messages */}
           {errorMessage && (
             <div className="text-red-500 text-center text-lg">
               {errorMessage}

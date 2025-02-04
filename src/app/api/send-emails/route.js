@@ -62,9 +62,9 @@ const parseCSV = (file) => {
 const parseCsvString = (csvData, emails) => {
   const lines = csvData.split("\n");
   lines.forEach((line, index) => {
-    if (index === 0) return; // Skip header row
+    if (index === 0) return;
     const columns = line.split(",");
-    const email = columns[0].trim(); // Assuming email is in the first column
+    const email = columns[0].trim();
     if (email) {
       emails.push(email);
     }

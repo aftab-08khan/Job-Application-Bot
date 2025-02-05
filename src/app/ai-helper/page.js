@@ -13,6 +13,8 @@ const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
 export default function AIJobApplication() {
   const [emailData, setEmailData] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [profession, setProfession] = useState("");
@@ -59,7 +61,19 @@ export default function AIJobApplication() {
 
       const result = await chat.sendMessage(prompt);
       const response = await result.response;
-      setEmailData(response.text());
+      const emailText = response.text();
+      setEmailData(emailText);
+
+      const subjectMatch = emailText.match(/Subject: (.+)/);
+      const bodyMatch = emailText.match(/Email Body: (.+)/s);
+
+      if (subjectMatch && bodyMatch) {
+        setSubject(subjectMatch[1]);
+        setBody(bodyMatch[1]);
+      } else {
+        setSubject("Subject not found");
+        setBody(emailText);
+      }
     } catch (error) {
       console.error("Chat error:", error);
       setEmailData("Error: Failed to generate email. Please try again.");
@@ -77,7 +91,7 @@ export default function AIJobApplication() {
     }
 
     const prompt = `
-      Generate a professional job application email. 
+      Generate a professional job application email maximum 15 lines. 
       - Name: ${name}
       - Profession: ${profession}
       - Skills: ${skills}
@@ -92,13 +106,19 @@ export default function AIJobApplication() {
     await runChat(prompt);
   };
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Copied to clipboard!");
+    });
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center p-8 bg-gray-900">
-      <Link href="/">
-        <button className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-300 disabled:opacity-50">
+      <div className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-300 disabled:opacity-50">
+        <Link href="/" className="">
           Back
-        </button>
-      </Link>
+        </Link>
+      </div>
 
       <h1 className="text-3xl font-bold mb-8 text-indigo-400">
         AI-Powered Job Application Email Generator
@@ -184,9 +204,32 @@ export default function AIJobApplication() {
           <h2 className="text-xl font-semibold text-indigo-400 mb-4">
             Generated Email:
           </h2>
-          <p className="text-gray-300 whitespace-pre-line bg-gray-700 p-4 rounded-lg">
-            {emailData}
-          </p>
+          <div className="space-y-4">
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-300">Subject:</span>
+                <button
+                  onClick={() => copyToClipboard(subject)}
+                  className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-300"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-gray-300 mt-2">{subject}</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-300">Email Body:</span>
+                <button
+                  onClick={() => copyToClipboard(body)}
+                  className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-300"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-gray-300 mt-2 whitespace-pre-line">{body}</p>
+            </div>
+          </div>
         </div>
       )}
     </main>

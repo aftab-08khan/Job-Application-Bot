@@ -44,6 +44,8 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const { handleMode, mode } = useTheme();
+  const [senderEmail, setSenderEmail] = useState("");
+  const [appPassword, setAppPassword] = useState("");
 
   const [isSpeechRecognitionAvailable, setIsSpeechRecognitionAvailable] =
     useState(false);
@@ -84,7 +86,7 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!csvFile || !description || !subject) {
+    if (!csvFile || !description || !subject || !senderEmail || !appPassword) {
       setErrorMessage("Please fill in all fields.");
       return;
     }
@@ -93,6 +95,8 @@ export default function Home() {
     formData.append("csvFile", csvFile);
     formData.append("description", description);
     formData.append("subject", subject);
+    formData.append("senderEmail", senderEmail);
+    formData.append("appPassword", appPassword);
 
     try {
       setLoading(true);
@@ -107,6 +111,8 @@ export default function Home() {
         setCsvFile(null);
         setDescription("");
         setSubject("");
+        setSenderEmail("");
+        setAppPassword("");
       } else {
         setErrorMessage("Failed to send emails.");
       }
@@ -116,26 +122,27 @@ export default function Home() {
       setLoading(false);
     }
   };
-  const predictEmailScore = async (description) => {
-    try {
-      const response = await fetch("/api/predict-score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description }),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch score");
-      }
+  // const predictEmailScore = async (description) => {
+  //   try {
+  //     const response = await fetch("/api/predict-score", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ description }),
+  //     });
 
-      const data = await response.json();
-      return data.score;
-    } catch (error) {
-      console.error("Error predicting email score:", error.message);
-      return null;
-    }
-  };
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "Failed to fetch score");
+  //     }
+
+  //     const data = await response.json();
+  //     return data.score;
+  //   } catch (error) {
+  //     console.error("Error predicting email score:", error.message);
+  //     return null;
+  //   }
+  // };
 
   const handleSubmitDescription = async (e) => {
     e.preventDefault();
@@ -162,56 +169,106 @@ export default function Home() {
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
               <label
-                htmlFor="csvFile"
+                htmlFor="senderEmail"
                 className="block text-lg font-medium text-gray-300 mb-2"
               >
-                Upload CSV
+                Sender Email
               </label>
-              <div className="relative mt-2">
-                <input
-                  type="file"
-                  id="csvFile"
-                  accept=".csv"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="w-full p-4 rounded-lg border-2 border-dashed border-gray-600 bg-gray-700 hover:border-indigo-500 transition duration-300 flex items-center justify-center">
-                  <div className="text-center">
-                    <svg
-                      className="w-8 h-8 mx-auto text-indigo-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                      ></path>
-                    </svg>
-                    <p className="mt-2 text-sm text-gray-300">
-                      <span className="font-semibold text-indigo-500">
-                        Click to upload
-                      </span>{" "}
-                      or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-400">CSV file only</p>
-                  </div>
-                </div>
-                {csvFile && (
-                  <div className="mt-2 text-sm text-gray-300">
-                    Selected file:{" "}
-                    <span className="font-medium text-indigo-400">
-                      {csvFile.name}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <input
+                type="email"
+                id="senderEmail"
+                value={senderEmail}
+                onChange={(e) => setSenderEmail(e.target.value)}
+                className="mt-2 w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600 hover:border-indigo-500"
+                placeholder="Enter sender email"
+              />
+            </div>
+
+            <div className="flex-1">
+              <label
+                htmlFor="appPassword"
+                className="block text-lg font-medium text-gray-300 mb-2"
+              >
+                Email App Password
+              </label>
+              <input
+                type="password"
+                id="appPassword"
+                value={appPassword}
+                onChange={(e) => setAppPassword(e.target.value)}
+                className="mt-2 w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600 hover:border-indigo-500"
+                placeholder="Enter Email app password"
+              />
+              <p className="mt-2 text-sm text-gray-400 leading-relaxed bg-gray-800 p-3 rounded-md border border-gray-700 shadow-sm">
+                Go to{" "}
+                <a
+                  href="https://myaccount.google.com/apppasswords"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-400 hover:underline"
+                >
+                  Google App Passwords
+                </a>
+                , select <span className="font-medium">"Mail"</span> as the app,
+                choose{" "}
+                <span className="font-medium">"Other (Custom name)"</span>,
+                enter a name, click{" "}
+                <span className="font-medium">"Generate"</span>, copy the{" "}
+                <span className="font-medium">16-character password</span>, and
+                use it.
+              </p>
             </div>
           </div>
-
+          <div className="flex-1">
+            <label
+              htmlFor="csvFile"
+              className="block text-lg font-medium text-gray-300 mb-2"
+            >
+              Upload CSV
+            </label>
+            <div className="relative mt-2">
+              <input
+                type="file"
+                id="csvFile"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div className="w-full p-4 rounded-lg border-2 border-dashed border-gray-600 bg-gray-700 hover:border-indigo-500 transition duration-300 flex items-center justify-center">
+                <div className="text-center">
+                  <svg
+                    className="w-8 h-8 mx-auto text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    ></path>
+                  </svg>
+                  <p className="mt-2 text-sm text-gray-300">
+                    <span className="font-semibold text-indigo-500">
+                      Click to upload
+                    </span>{" "}
+                    or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-400">CSV file only</p>
+                </div>
+              </div>
+              {csvFile && (
+                <div className="mt-2 text-sm text-gray-300">
+                  Selected file:{" "}
+                  <span className="font-medium text-indigo-400">
+                    {csvFile.name}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300 w-40">
             <Link href="/ai-helper">Generate with AI</Link>
           </div>
@@ -244,7 +301,17 @@ export default function Home() {
                   </button>
                 </div>
               )}
+              <div className="">
+                <button
+                  type="button"
+                  onClick={handleSubmitDescription}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300"
+                >
+                  Test Description
+                </button>
+              </div>
             </div>
+
             <textarea
               id="description"
               rows="6"
@@ -253,15 +320,6 @@ export default function Home() {
               className="mt-2 w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600 hover:border-indigo-500"
               placeholder="Enter description"
             ></textarea>
-            <div className="">
-              <button
-                type="button"
-                onClick={handleSubmitDescription}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300"
-              >
-                Test Description
-              </button>
-            </div>
           </div>
 
           {errorMessage && (

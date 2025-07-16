@@ -12,32 +12,18 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const { handleMode, mode } = useTheme();
   const [senderEmail, setSenderEmail] = useState("");
   const [appPassword, setAppPassword] = useState("");
 
-  const [isSpeechRecognitionAvailable, setIsSpeechRecognitionAvailable] =
-    useState(false);
-  const [recognitionInstance, setRecognitionInstance] = useState(null);
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (
-        "SpeechRecognition" in window ||
-        "webkitSpeechRecognition" in window
-      ) {
-        setIsSpeechRecognitionAvailable(true);
-      }
-    }
-  }, []);
-
-  const handleFileChange = (e) => {
-    setCsvFile(e.target.files[0]);
+    setCsvFile(file); // optional if you need state elsewhere
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!csvFile || !description || !subject || !senderEmail || !appPassword) {
+    if (!csvFile || !description || !senderEmail || !appPassword) {
       setErrorMessage("Please fill in all fields.");
       return;
     }
@@ -45,7 +31,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("csvFile", csvFile);
     formData.append("description", description);
-    formData.append("subject", subject);
+    // formData.append("subject", subject);
     formData.append("senderEmail", senderEmail);
     formData.append("appPassword", appPassword);
 
@@ -75,7 +61,10 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full p-4 min-h-screen bg-gray-900 transition duration-300 flex items-center justify-center">
+    <div className="w-full p-4 min-h-screen bg-gray-900 transition duration-300 flex items-center flex-col justify-center">
+      <h1 className="text-4xl font-medium tracking-wider text-white mb-6">
+        Job Application Bot
+      </h1>
       <div className="w-full max-w-4xl bg-gray-800 bg-opacity-60 p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md transition-all duration-500 animate-fadeIn">
         <h1 className="text-4xl font-bold text-center mb-8 text-indigo-400">
           Send Emails
@@ -169,7 +158,7 @@ export default function Home() {
               </div>
               {csvFile && (
                 <div className="mt-2 text-sm text-gray-300">
-                  Selected file:{" "}
+                  Selected file
                   <span className="font-medium text-indigo-400">
                     {csvFile.name}
                   </span>
@@ -179,7 +168,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <div>
+            {/* <div>
               <label
                 htmlFor="subject"
                 className="block text-lg font-medium text-gray-300 mb-2"
@@ -194,7 +183,7 @@ export default function Home() {
                 className="mt-2 w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300 bg-gray-700 text-white border-gray-600 hover:border-indigo-500"
                 placeholder="Enter subject"
               />
-            </div>
+            </div> */}
 
             <div>
               <label

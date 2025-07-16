@@ -1,0 +1,8 @@
+valid description
+"I am writing to express my interest in the Fronted Developer position at Google. With my background in React , Next JS , Tailwind CSS. I am confident in my ability to contribute effectively to your team. Please find my resume attached for your consideration."
+
+
+
+invalid description
+
+"Hey, I want a job in your company. I’m good at stuff and need work ASAP. Let me know if anything’s available."

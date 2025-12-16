@@ -203,27 +203,38 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex justify-center items-center space-x-4">
-            {loading ? (
-              <span>Loading...</span>
-            ) : (
-              <button
-                type="submit"
-                className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300"
-              >
-                Send Emails
-              </button>
+          <div className="flex flex-col items-center gap-4 mt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`relative flex items-center justify-center gap-2 px-10 py-3 rounded-xl 
+      font-semibold tracking-wide text-white transition-all duration-300
+      ${
+        loading
+          ? "bg-indigo-400 cursor-not-allowed"
+          : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-indigo-500/40"
+      }`}
+            >
+              {loading && (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              )}
+              {loading ? "Sending Emails..." : "Send Emails"}
+            </button>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="w-full max-w-md px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-center animate-fadeIn">
+                {errorMessage}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {successMessage && (
+              <div className="w-full max-w-md px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-center animate-fadeIn">
+                {successMessage}
+              </div>
             )}
           </div>
-
-          {errorMessage && (
-            <div className="text-red-500 text-center mt-4">{errorMessage}</div>
-          )}
-          {successMessage && (
-            <div className="text-green-500 text-center mt-4">
-              {successMessage}
-            </div>
-          )}
         </form>
       </div>
     </div>

@@ -221,14 +221,12 @@ export default function Home() {
               {loading ? "Sending Emails..." : "Send Emails"}
             </button>
 
-            {/* Error Message */}
             {errorMessage && (
               <div className="w-full max-w-md px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-center animate-fadeIn">
                 {errorMessage}
               </div>
             )}
 
-            {/* Success Message */}
             {successMessage && (
               <div className="w-full max-w-md px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-center animate-fadeIn">
                 {successMessage}

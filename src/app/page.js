@@ -14,22 +14,42 @@ export default function Home() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [senderEmail, setSenderEmail] = useState("");
   const [appPassword, setAppPassword] = useState("");
+  const [cvFile, setCvFile] = useState(null);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
 
     setCsvFile(file); // optional if you need state elsewhere
   };
+  const handleCvChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage("Only PDF or Word documents are allowed.");
+      return;
+    }
+
+    setCvFile(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!csvFile || !description || !senderEmail || !appPassword) {
-      setErrorMessage("Please fill in all fields.");
+    if (!csvFile || !description || !senderEmail || !appPassword || !cvFile) {
+      setErrorMessage("Please fill in all fields including CV.");
       return;
     }
 
     const formData = new FormData();
     formData.append("csvFile", csvFile);
+    formData.append("cvFile", cvFile);
+
     formData.append("description", description);
     // formData.append("subject", subject);
     formData.append("senderEmail", senderEmail);
@@ -165,6 +185,24 @@ export default function Home() {
                 </div>
               )}
             </div>
+          </div>
+          <div className="flex-1">
+            <label className="block text-lg font-medium text-gray-300 mb-2">
+              Attach CV
+            </label>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleCvChange}
+              className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+            />
+
+            {cvFile && (
+              <p className="mt-2 text-sm text-indigo-400">
+                Attached: {cvFile.name}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-6">

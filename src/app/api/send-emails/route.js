@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
 
+/* =======================
+   Utils
+======================= */
+
 const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
@@ -23,7 +27,7 @@ const parseCsvString = (csvString) => {
 
     if (email && isValidEmail(email)) {
       emails.push(email);
-      roles.push(role || "No Role");
+      roles.push(role || "Job Application");
     }
   });
 
@@ -35,44 +39,82 @@ const parseCSV = async (file) => {
   const decoder = new TextDecoder("utf-8");
   let csvData = "";
 
-  try {
-    let { value, done } = await reader.read();
-    while (!done) {
-      csvData += decoder.decode(value, { stream: true });
-      ({ value, done } = await reader.read());
+  let done = false;
+  while (!done) {
+    const result = await reader.read();
+    done = result.done;
+    if (result.value) {
+      csvData += decoder.decode(result.value, { stream: !done });
     }
-
-    return parseCsvString(csvData);
-  } catch (error) {
-    console.error("Error reading CSV file:", error);
-    return { emails: [], roles: [] };
   }
+
+  return parseCsvString(csvData);
 };
+
+/* =======================
+   POST Handler
+======================= */
 
 export async function POST(req) {
   try {
-    const body = await req.formData();
-    const userEmail = body.get("senderEmail");
-    const userPassword = body.get("appPassword");
-    const description = body.get("description");
-    const file = body.get("csvFile");
-    const subject = body.get("subject");
+    const formData = await req.formData();
+
+    const userEmail = formData.get("senderEmail");
+    const userPassword = formData.get("appPassword");
+    const description = formData.get("description");
+    const csvFile = formData.get("csvFile");
+    const cvFile = formData.get("cvFile");
+    const subject = formData.get("subject");
+
+    /* =======================
+       Validations
+    ======================= */
 
     if (!userEmail || !userPassword) {
-      return new Response("Email and password are required.", { status: 400 });
-    }
-
-    if (!file) {
-      return new Response("No file uploaded.", { status: 400 });
-    }
-
-    const { emails, roles } = await parseCSV(file);
-
-    if (!emails.length || !roles.length) {
-      return new Response("No valid emails or roles found in CSV.", {
+      return new Response("Email and App Password are required.", {
         status: 400,
       });
     }
+
+    if (!csvFile) {
+      return new Response("CSV file is required.", { status: 400 });
+    }
+
+    if (!cvFile) {
+      return new Response("CV file is required.", { status: 400 });
+    }
+
+    const allowedCVTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowedCVTypes.includes(cvFile.type)) {
+      return new Response("Invalid CV file type.", { status: 400 });
+    }
+
+    /* =======================
+       Parse CSV
+    ======================= */
+
+    const { emails, roles } = await parseCSV(csvFile);
+
+    if (!emails.length) {
+      return new Response("No valid emails found in CSV.", {
+        status: 400,
+      });
+    }
+
+    /* =======================
+       Prepare CV Attachment
+    ======================= */
+
+    const cvBuffer = Buffer.from(await cvFile.arrayBuffer());
+
+    /* =======================
+       Nodemailer Setup
+    ======================= */
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -82,25 +124,37 @@ export async function POST(req) {
       },
     });
 
+    /* =======================
+       Send Emails
+    ======================= */
+
     await Promise.all(
-      emails.map(async (email, i) => {
+      emails.map(async (email, index) => {
         try {
           await transporter.sendMail({
             from: userEmail,
             to: email,
-            subject: subject || roles[i] || "No Subject",
+            subject: subject || `Application for ${roles[index]}`,
             text: description,
+            attachments: [
+              {
+                filename: cvFile.name,
+                content: cvBuffer,
+                contentType: cvFile.type,
+              },
+            ],
           });
+
           console.log(`Email sent to: ${email}`);
         } catch (err) {
-          console.error(`Failed to send email to ${email}:`, err.message);
+          console.error(`Failed to send email to ${email}`, err.message);
         }
       })
     );
 
     return new Response("Emails sent successfully!", { status: 200 });
   } catch (error) {
-    console.error("Error processing request:", error);
+    console.error("Server Error:", error);
     return new Response("Error sending emails.", { status: 500 });
   }
 }

@@ -1,9 +1,5 @@
 import nodemailer from "nodemailer";
 
-/* =======================
-   Utils
-======================= */
-
 const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
@@ -50,10 +46,6 @@ const parseCSV = async (file) => {
 
   return parseCsvString(csvData);
 };
-
-/* =======================
-   POST Handler
-======================= */
 
 export async function POST(req) {
   try {
@@ -134,7 +126,7 @@ export async function POST(req) {
           await transporter.sendMail({
             from: userEmail,
             to: email,
-            subject: subject || `Application for ${roles[index]}`,
+            subject: subject || ` ${roles[index]}`,
             text: description,
             attachments: [
               {
